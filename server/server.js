@@ -24,6 +24,18 @@ app.post('/todos', (req, res) => {
     });
 });
 
+// trying to get all the todos
+app.get('/todos', (req, res) => {
+    Todo.find().then((todos) => {
+        // when you pass back an array your locking yourself back
+        // if you wanted to add on some custom data or property you cant
+        // so pass in an object around todos
+        res.send({todos});
+    }, (e) => {
+        res.status(400).send(e);
+    })
+});
+
 
 app.listen(3000, () => {
     console.log('Started on port 3000');
