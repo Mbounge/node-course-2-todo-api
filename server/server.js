@@ -5,6 +5,7 @@ var bodyParser = require('body-parser');
 var {mongoose} = require('./db/mongoose');
 var {Todo} = require('./models/todo');
 var {User} = require('./models/user');
+var {ObjectID} = require('mongodb');
 
 
 var app = express();
@@ -35,6 +36,28 @@ app.get('/todos', (req, res) => {
         res.status(400).send(e);
     });
 });
+
+// :Id is a variable which will be created, which will be on the request object, we should be able to access it
+app.get('/todos/:id', (req, res) => {
+    //res.send(req.params);
+    var id = req.params.id;
+    
+   if(!ObjectID.isValid(id)) {
+      return res.status(404).send('Cannot find Id');
+   }
+    
+    Todo.findById(id).then((todo) => {     
+        if(!todo) {
+           return res.status(404).send();
+        }
+        
+        res.send({todo});
+        
+    }).catch((e) => {
+        res.status(400).send();
+    });  
+});
+
 
 
 app.listen(3000, () => {
