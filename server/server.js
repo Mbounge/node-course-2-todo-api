@@ -1,17 +1,20 @@
-// server.js is rsponsible only for the routes
-var express = require('express');
-var bodyParser = require('body-parser');
+// server.js is responsible only for the routes
+const _ = require('lodash');
+const express = require('express');
+const bodyParser = require('body-parser');
+const {ObjectID} = require('mongodb');
+
 
 var {mongoose} = require('./db/mongoose');
 var {Todo} = require('./models/todo');
 var {User} = require('./models/user');
-var {ObjectID} = require('mongodb');
 
 
 var app = express();
 const port =  process.env.PORT || 3000;
 
 app.use(bodyParser.json()); // middleware
+
 
 // for resource creation
 app.post('/todos', (req, res) => {
@@ -26,6 +29,7 @@ app.post('/todos', (req, res) => {
     });
 });
 
+
 // trying to get all the todos
 app.get('/todos', (req, res) => {
     Todo.find().then((todos) => {
@@ -37,6 +41,7 @@ app.get('/todos', (req, res) => {
         res.status(400).send(e);
     });
 });
+
 
 // :Id is a variable which will be created, which will be on the request object, we should be able to access it
 app.get('/todos/:id', (req, res) => {
@@ -59,6 +64,7 @@ app.get('/todos/:id', (req, res) => {
     });  
 });
 
+
 // deleting todo from DB
 app.delete('/todos/:id', (req, res) => {
     var id = req.params.id;
@@ -77,6 +83,42 @@ app.delete('/todos/:id', (req, res) => {
         res.status(200).send({todo});
         
     }).catch((e) => { // error 
+        res.status(400).send();
+    });
+});
+
+
+app.patch('/todos/:id', (req, res) => {
+    var id = req.params.id;
+    // make sure users are able to update only the text field and the completed field
+    var body = _.pick(req.body, ['text', 'completed']);
+    
+    // validation step
+    if(!ObjectID.isValid(id)) {
+        return res.status(404).send('Cannot find id');
+    }
+    
+    // trying to update timestamp of update query
+    if(_.isBoolean(body.completed) && body.completed) {
+        // if its a boolean and its true
+        body.completedAt = new Date().getTime(); // return js timestamp, miliseconds of year 1970 midnight
+        
+    } else {
+        // if its not a boolean and its not true 
+        body.completed = false;
+        body.completedAt = null;
+    }
+    
+    
+    Todo.findByIdAndUpdate(id, {$set: body}, {new: true}).then((todo) => {
+        
+        if(!todo) {
+            res.status(404).send();
+        }
+        
+        res.send({todo});
+        
+    }).catch((e) => {
         res.status(400).send();
     });
 });
