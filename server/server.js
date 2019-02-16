@@ -59,6 +59,27 @@ app.get('/todos/:id', (req, res) => {
     });  
 });
 
+// deleting todo from DB
+app.delete('/todos/:id', (req, res) => {
+    var id = req.params.id;
+    
+    // validation step
+    if(!ObjectID.isValid(id)) {
+        return res.status(404).send('Cannot find id');
+    }
+    
+    Todo.findByIdAndRemove(id).then((todo) => {
+        if(!todo) { // if todo is not there in DB
+            return res.status(404).send()
+        }
+        
+        //success case
+        res.status(200).send({todo});
+        
+    }).catch((e) => { // error 
+        res.status(400).send();
+    });
+});
 
 
 app.listen(port, () => {
