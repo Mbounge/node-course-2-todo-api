@@ -6,17 +6,14 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const {ObjectID} = require('mongodb');
 
-
 var {mongoose} = require('./db/mongoose');
 var {Todo} = require('./models/todo');
 var {User} = require('./models/user');
-
 
 var app = express();
 const port =  process.env.PORT || 3000;
 
 app.use(bodyParser.json()); // middleware
-
 
 // for resource creation
 app.post('/todos', (req, res) => {
@@ -31,7 +28,6 @@ app.post('/todos', (req, res) => {
     });
 });
 
-
 // trying to get all the todos
 app.get('/todos', (req, res) => {
     Todo.find().then((todos) => {
@@ -43,7 +39,6 @@ app.get('/todos', (req, res) => {
         res.status(400).send(e);
     });
 });
-
 
 // :Id is a variable which will be created, which will be on the request object, we should be able to access it
 app.get('/todos/:id', (req, res) => {
@@ -66,7 +61,6 @@ app.get('/todos/:id', (req, res) => {
     });  
 });
 
-
 // deleting todo from DB
 app.delete('/todos/:id', (req, res) => {
     var id = req.params.id;
@@ -88,8 +82,7 @@ app.delete('/todos/:id', (req, res) => {
         res.status(400).send();
     });
 });
-
-
+1
 app.patch('/todos/:id', (req, res) => {
     var id = req.params.id;
     // make sure users are able to update only the text field and the completed field
@@ -110,8 +103,7 @@ app.patch('/todos/:id', (req, res) => {
         body.completed = false;
         body.completedAt = null;
     }
-    
-    
+     
     Todo.findByIdAndUpdate(id, {$set: body}, {new: true}).then((todo) => {
         
         if(!todo) {
@@ -124,7 +116,21 @@ app.patch('/todos/:id', (req, res) => {
         res.status(400).send();
     });
 });
-
+ 
+app.post('/users', (req, res) => {
+    
+    var body = _.pick(req.body, ['email', 'password']);
+    var user = new User(body);
+    
+    user.save().then(() => {
+       return user.generateAuthToken();
+    }).then((token) => {
+        // x-auth means its custom header 
+        res.header('x-auth', token).send(user);
+    }).catch((e) => {
+        res.status(400).send(e);
+    });   
+});
 
 app.listen(port, () => {
     console.log(`Started on port ${port}`);
